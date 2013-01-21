@@ -1,0 +1,17 @@
+{
+  "name": "socketmq",
+  "version": "0.0.0",
+  "description": "ZeroMQ-like semantics in the wild",
+  "keywords": ["zeromq", "zmq", "message", "queue", "socket.io"],
+  "author": "Senmiao Liu <zir.echo@gmail.com>",
+  "dependencies": {
+    "zmq": "2.2.x",
+    "socket.io": "~0.9.13"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "chai": "*",
+    "coffee-script": "1.4.x"
+  },
+  "main": "index"
+}
