@@ -1,12 +1,12 @@
 {
   "name": "socketmq",
   "version": "0.0.0",
-  "description": "ZeroMQ-like semantics in the wild",
-  "keywords": ["zeromq", "zmq", "message", "queue", "socket.io"],
+  "description": "Library for building application in ZeroMQ-like messaging semantics end to end. Build upon node.js and Engine.IO",
+  "keywords": ["zeromq", "zmq", "message", "queue", "engine.io"],
   "author": "Senmiao Liu <zir.echo@gmail.com>",
   "dependencies": {
     "zmq": "2.2.x",
-    "socket.io": "~0.9.13"
+    "engine.io": "~ 0.3.4"
   },
   "devDependencies": {
     "mocha": "*",
