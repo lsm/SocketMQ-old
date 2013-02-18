@@ -37,7 +37,7 @@ By combining ZeroMQ and [Engine.IO](https://github.com/LearnBoost/engine.io) the
 
 ```javascript
   var SocketMQ = require('socketmq');
-  var context = SocketMQ.connect(8888, '127.0.0.1');
+  var context = SocketMQ.connect('http://127.0.0.1:8888');
 
   var requester = context.socket('req');
 
@@ -83,7 +83,7 @@ SocketMQ can listen to the existing `httpServer` instance.
 
 ```javascript
   var SocketMQ = require('socketmq');
-  var context = SocketMQ.connect(8888, '127.0.0.1');
+  var context = SocketMQ.connect('http://127.0.0.1:8888');
 
   var subscriber = context.socket('sub');
   subscriber.connect('weather://');
@@ -118,7 +118,7 @@ SocketMQ can listen to the existing `httpServer` instance.
 
 ```javascript
   var SocketMQ = require('socketmq');
-  var context = SocketMQ.listen(8888, '127.0.0.1');
+  var context = SocketMQ.listen('http://127.0.0.1:8888');
 
   var puller = context.socket('pull');
   puller.connect('task://');
