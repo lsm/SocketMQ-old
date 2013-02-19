@@ -19,8 +19,8 @@ describe 'SocketMQ', () ->
       expect(SocketMQ.connect).to.be.a('function')    
 
   it 'should expose the proxy function', () ->
-    expect(SocketMQ.Context).to.be.a('function')
+    expect(SocketMQ.proxy).to.be.a('function')
 
   it 'should expose socket types as number', () ->
-    ['REQ', 'REP', 'DEALER', 'ROUTER', 'PUB', 'SUB', 'PUSH', 'PULL'].forEach (socketType) ->
+    ['PAIR', 'REQ', 'REP', 'DEALER', 'ROUTER', 'PUB', 'SUB', 'PUSH', 'PULL'].forEach (socketType) ->
       expect(SocketMQ[socketType]).to.be.a('number')
