@@ -78,9 +78,12 @@ class Context extends EventEmitter
       fn {code: 'EINVALIDARGS', message: "First argument of Context#listen must be instance of http.Server or port number"}
       return @
 
-    fn && @server.httpServer.on 'listening', fn
-    #@todo call bind callback
-
+    fn && @server.httpServer.on 'listening', (args...) =>
+      fn args...
+      for endpoint, socket of @sockets
+        for callback in socket.bindCallbacks
+          callback args...
+    
     @server.on 'connection', (conn) =>
       onPacket = (packet) =>
         if 'open' is packet.type

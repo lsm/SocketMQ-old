@@ -33,9 +33,11 @@ class Socket extends EventEmitter
     @endpoint = url
     @context.handshake @
 
-  bind: (endpoint) ->    
+  bind: (endpoint, callback) ->    
     @context.setSocket endpoint, @
-    @endpoints.push(endpoint)
+    @endpoints.push endpoint
+    if 'function' is typeof callback
+      @bindCallbacks.push callback
 
   setsockopt: (name, value) ->
 
