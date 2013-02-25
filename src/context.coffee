@@ -113,7 +113,7 @@ class Context extends EventEmitter
     if 'smq' in conn
       # socketmq handshaked connection
       {id, endpoint, type} = conn
-      socket = @getBindSocket endpoint
+      socket = @getSocket endpoint
 
       if not socket
         debug 'Unknow destination endpoint'
