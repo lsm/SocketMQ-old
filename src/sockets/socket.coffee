@@ -18,7 +18,7 @@ types = exports.types =
 class Socket extends EventEmitter
 
   constructor: (context, type, options) ->
-    if type not in types
+    if types[type] is undefined
       throw new Error 'Unknow socket type "' + type + '"'
 
     @context = context

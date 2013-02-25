@@ -9,11 +9,11 @@ for k, v of socket
   exports[k] = v
 
 
-exports.listen = (port, host) ->
-  if typeof port is not 'number' or port not instanceof http.Server
+exports.listen = (port, host, options, callback) ->
+  if 'number' isnt typeof port and port not instanceof http.Server
     throw new Error "First argument of SocketMQ#listen must be instance of http.Server or port number"
   context = new Context
-  return context.listen port, host
+  return context.listen port, host, options, callback
 
 
 exports.connect = (url) ->

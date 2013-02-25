@@ -74,8 +74,7 @@ class Context extends EventEmitter
       httpServer.listen port, host
       @server = engine.attach httpServer, opts
     else if port instanceof http.Server
-      @server = port
-      engine.attach server, opts
+      @server = engine.attach port, opts
     else
       fn {code: 'EINVALIDARGS', message: "First argument of Context#listen must be instance of http.Server or port number"}
       return @
