@@ -31,10 +31,7 @@ class Context extends EventEmitter
     # Engine.io "open" packet sent from "server"
     @client.on 'handshake', (data) =>
       debug 'Handshake data %s', data
-      if 'smq' in data
-        @client.id = data.id
-        @client.endpoint = data.endpoint
-        @client.type = data.type
+      if data.smq
         @client.smq = data.smq
         @handleConnection @client, data
       else
@@ -89,8 +86,6 @@ class Context extends EventEmitter
         if 'open' is packet.type
           debug 'Handshake data from client: %s', packet.data
           data = packet.data          
-          conn.endpoint = data.endpoint
-          conn.type = data.type
           conn.smq = data.smq
           @handleConnection conn, data
           conn.off 'packet', onPacket
