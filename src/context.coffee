@@ -16,7 +16,7 @@ class Context extends EventEmitter
   
   constructor: (@options) ->
     @sockets = {}
-    @clients = {}
+    @connections = {}
 
   socket: (type, options) ->
     new Socket(@, type, options)
@@ -127,15 +127,15 @@ class Context extends EventEmitter
           data.type = socket.type
           conn.sendPacket 'open', data
 
-        clients = @clients
-        clients[endpoint] = clients[endpoint] ? {}
-        clients[endpoint][id] = conn
+        connections = @connections
+        connections[endpoint] = connections[endpoint] ? {}
+        connections[endpoint][id] = conn
         connMeta = { id: id, endpoint: endpoint, type: type }
 
         conn.once 'close', (reason, info) ->
-          if clients[endpoint][id]
+          if connections[endpoint][id]
             debug 'Engine.io client socket closed: %s', reason
-            delete clients[endpoint][id]          
+            delete connections[endpoint][id]          
             socket.handleDisconnect connMeta
             @emit 'disconnect', connMeta 
           else
@@ -153,7 +153,7 @@ class Context extends EventEmitter
       conn.close()
       
   send: (socket, conn, data) ->
-    connection = @clients[conn.endpoint][conn.id]
+    connection = @connections[conn.endpoint][conn.id]
     connection.send data
 
     
