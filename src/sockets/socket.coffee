@@ -24,18 +24,15 @@ class Socket extends EventEmitter
     @context = context
     @type = types[type]
     @outBuffer = []
-    @connections = {}
-    @connectionIds = []
-    @n = 0
+    @connections = []
+    @bindCallbacks = []
 
   connect: (url) ->
     @context.setSocket url, @
-    @endpoint = url
     @context.handshake @
 
-  bind: (endpoint, callback) ->    
+  bind: (endpoint, callback) ->
     @context.setSocket endpoint, @
-    @endpoints.push endpoint
     if 'function' is typeof callback
       @bindCallbacks.push callback
 
@@ -69,20 +66,19 @@ class Socket extends EventEmitter
     debug 'Message "' + msg + '" dropped due to ' + reason
     @emit 'drop', msg, reason
    
-  
   handleConnect: (conn) ->
     @emit 'connect', conn
-    @connections.push conn    
-  
+    if conn not in @connections
+      @connections.push conn
   
   handleDisconnect: (conn) ->
-    var idx = @connections.indexOf conn
+    idx = @connections.indexOf conn
     if idx > -1
       @emit 'disconnect', conn
       @connections.splice idx, 1
 
   flushRoundRobin: (data) ->
-    if @connections.length > 0 and !flushing
+    if @connections.length > 0 and !@flushing
       @flushing = true
       @outBuffer.push data
       
@@ -93,14 +89,7 @@ class Socket extends EventEmitter
     else if @outBuffer.length >= @hwm
       @drop data, 'high water mark reached (#{@hwm})'
     else 
-      @outBuffer.push data  
-      
-  
-  
-      
-  
-  
+      @outBuffer.push data
 
-  
 
 exports.Socket = Socket
