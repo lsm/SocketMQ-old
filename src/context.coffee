@@ -48,12 +48,17 @@ class Context extends EventEmitter
       the server will reply an "open" packet with server endpoint info
       or close the connection if the socket type miss match (e.g. connect req to req)
     ###
-    @once 'handshake', (data) ->
-      data.id = data.sid
-      data.endpoint = socket.endpoint
-      data.type = socket.type
-      data.smq = 0x01
-      @client.sendPacket 'open', data
+    if @client.smq
+      # the underlying connection already handshaked
+      # try to handle the connection with given socket properties
+      @handleConnection @client, { id: client.id, endpoint: socket.endpoint, type: socket.type }
+    else
+      @once 'handshake', (data) ->
+        data.id = data.sid
+        data.endpoint = socket.endpoint
+        data.type = socket.type
+        data.smq = 0x01
+        @client.sendPacket 'open', data
 
   # server methods
   listen: (port, host, options, fn) ->
@@ -85,13 +90,12 @@ class Context extends EventEmitter
       onPacket = (packet) =>
         if 'open' is packet.type
           debug 'Handshake data from client: %s', packet.data
-          data = packet.data          
+          data = packet.data
           conn.smq = data.smq
           @handleConnection conn, data
           conn.off 'packet', onPacket
-      
-      conn.on 'packet', onPacket
 
+      conn.on 'packet', onPacket
     return @
 
   setSocket: (endpoint, socket) ->
@@ -105,9 +109,9 @@ class Context extends EventEmitter
 
   # handle engine.io connection and find a proper socket to handle it
   handleConnection: (conn, meta) ->
-    if 'smq' in conn
+    if conn.smq
       # socketmq handshaked connection
-      {id, endpoint, type} = conn
+      {id, endpoint, type} = meta
       socket = @getSocket endpoint
 
       if not socket
@@ -126,18 +130,21 @@ class Context extends EventEmitter
           conn.sendPacket 'open', data
 
         connections = @connections
-        connections[endpoint] = connections[endpoint] ? {}
-        connections[endpoint][id] = conn
+        if not connections[endpoint] then connections[endpoint] = {}
         connMeta = { id: id, endpoint: endpoint, type: type }
 
-        conn.once 'close', (reason, info) ->
-          if connections[endpoint][id]
-            debug 'Engine.io client socket closed: %s', reason
-            delete connections[endpoint][id]          
-            socket.handleDisconnect connMeta
-            @emit 'disconnect', connMeta 
-          else
-            debug('Closing an inexistent engine.io socket')
+        if not connections[endpoint][id]
+          connections[endpoint][id] = conn
+          # one connection may be used by multilple socketmq socket
+          # close event should be handled once for the same connection
+          conn.once 'close', (reason, info) ->
+            if connections[endpoint][id]
+              debug 'Engine.io client socket closed: %s', reason
+              delete connections[endpoint][id]
+              socket.handleDisconnect connMeta
+              @emit 'disconnect', connMeta
+            else
+              debug 'Closing an inexistent engine.io socket'
 
         conn.on 'message', (data) ->
           socket.handleMessage connMeta, data
@@ -154,7 +161,6 @@ class Context extends EventEmitter
     connection = @connections[conn.endpoint][conn.id]
     connection.send data
 
-    
   close: ->
     
   
