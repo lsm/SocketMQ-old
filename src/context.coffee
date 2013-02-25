@@ -21,6 +21,7 @@ class Context extends EventEmitter
   socket: (type, options) ->
     new Socket(@, type, options)
 
+  # client methods
   connect: (url, options) ->
     if 'string' is typeof url
       @client = engineClient url, options
@@ -29,25 +30,26 @@ class Context extends EventEmitter
 
     # Engine.io "open" packet sent from "server"
     @client.on 'handshake', (data) =>
-      if 'smq' in data        
+      debug 'Handshake data %s', data
+      if 'smq' in data
         @client.id = data.id
         @client.endpoint = data.endpoint
         @client.type = data.type
+        @client.smq = data.smq
+        @handleConnection @client, data
       else
         # original engine.io handshake, emit the data
         # add socketmq options and send an "open" packet to server upon handshake
         @emit 'handshake', data
     
     return @
-
     
   handshake: (socket) ->
     ###
       when received handshake data from server
       add socket info to received data and send an "open" packet to server
       the server will reply an "open" packet with server endpoint info
-      or close the connection if the socket type missmatch (e.g. connect req to req)
-
+      or close the connection if the socket type miss match (e.g. connect req to req)
     ###
     @once 'handshake', (data) ->
       data.id = data.sid
@@ -56,6 +58,7 @@ class Context extends EventEmitter
       data.smq = 0x01
       @client.sendPacket 'open', data
 
+  # server methods
   listen: (port, host, options, fn) ->
     opts = 
       path: '/socketmq'
@@ -76,9 +79,21 @@ class Context extends EventEmitter
       return @
 
     fn && @server.httpServer.on 'listening', fn
+    #@todo call bind callback
+
     @server.on 'connection', (conn) =>
-      @handleConnection conn
-    
+      onPacket = (packet) =>
+        if 'open' is packet.type
+          debug 'Handshake data from client: %s', packet.data
+          data = packet.data          
+          conn.endpoint = data.endpoint
+          conn.type = data.type
+          conn.smq = data.smq
+          @handleConnection conn, data
+          conn.off 'packet', onPacket
+      
+      conn.on 'packet', onPacket
+
     return @
 
   setSocket: (endpoint, socket) ->
@@ -90,37 +105,52 @@ class Context extends EventEmitter
   getSocket: (endpoint) ->
     return endpoint && @sockets[endpoint]
 
-  # handle engine connection and find a proper socket to handle it
-  handleConnection: (conn) ->
-    {endpoint, type} = qsParse(urlParse(conn.request.url).query)
-    socket = @getBindSocket endpoint
+  # handle engine.io connection and find a proper socket to handle it
+  handleConnection: (conn, meta) ->
+    if 'smq' in conn
+      # socketmq handshaked connection
+      {id, endpoint, type} = conn
+      socket = @getBindSocket endpoint
 
-    if not socket
-      debug 'Unknow destination endpoint'
-      conn.close()
-    else if socket.accept type      
-      connId = conn.id
-      clients = @clients
-      clients[endpoint] = clients[endpoint] ? {}
-      clients[endpoint][connId] = conn
-      connMeta = { id: connId, endpoint: endpoint, type: type }
+      if not socket
+        debug 'Unknow destination endpoint'
+        conn.close()
+      else if socket.accept type
+        if conn.server
+          # connection on server side, need to reply an open packet to client
+          data = {}
+          for k, v in meta
+            data[k] = v
+          # the socket type of conn is client socket type
+          # we need to set the type to server socket type when sending back to client
+          # other properties should be same
+          data.type = socket.type
+          conn.sendPacket 'open', data
 
-      conn.once 'close', (reason, info) ->
-        if clients[endpoint][connId]
-          debug 'Engine.io client socket closed: %s', reason
-          delete clients[endpoint][connId]          
-          socket.handleDisconnect connMeta
-          @emit 'disconnect', connMeta
-        else
-          debug('Closing an inexistent engine.io socket')
+        clients = @clients
+        clients[endpoint] = clients[endpoint] ? {}
+        clients[endpoint][id] = conn
+        connMeta = { id: id, endpoint: endpoint, type: type }
 
-      conn.on 'message', (data) ->
-        socket.handleMessage connMeta, data
+        conn.once 'close', (reason, info) ->
+          if clients[endpoint][id]
+            debug 'Engine.io client socket closed: %s', reason
+            delete clients[endpoint][id]          
+            socket.handleDisconnect connMeta
+            @emit 'disconnect', connMeta 
+          else
+            debug('Closing an inexistent engine.io socket')
 
-      socket.handleConnect connMeta
+        conn.on 'message', (data) ->
+          socket.handleMessage connMeta, data
+
+        socket.handleConnect connMeta
+      else
+        debug 'Not accepted socket type: %s', type
+        conn.close()
     else
-      debug 'Not accepted socket type: %s', type
-      conn.close()      
+      debug 'Not a SocketMQ connection, closing...'
+      conn.close()
       
   send: (socket, conn, data) ->
     connection = @clients[conn.endpoint][conn.id]
