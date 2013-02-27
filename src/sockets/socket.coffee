@@ -77,6 +77,13 @@ class Socket extends EventEmitter
       @emit 'disconnect', conn
       @connections.splice idx, 1
 
+  close: ->
+    if not @closed
+      @closed = true
+      @emit 'close'
+      @connections = []
+      @outBuffer = []
+
   flushRoundRobin: (data) ->
     if @connections.length > 0 and !@flushing
       @flushing = true
@@ -90,6 +97,5 @@ class Socket extends EventEmitter
       @drop data, 'high water mark reached (#{@hwm})'
     else 
       @outBuffer.push data
-
 
 exports.Socket = Socket

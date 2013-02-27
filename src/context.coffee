@@ -7,7 +7,7 @@ engine = require 'engine.io'
 engineClient = require 'engine.io-client'
 debug = require('debug')('socketmq:context')
 {EventEmitter} = require 'events'
-{types, Socket} = require './sockets'
+{types, Socket, sockets} = require './sockets'
 qsParse = require('querystring').parse
 urlParse = require('url').parse
 
@@ -19,7 +19,10 @@ class Context extends EventEmitter
     @connections = {}
 
   socket: (type, options) ->
-    new Socket(@, type, options)
+    Sock = sockets[type]
+    if 'function' is not typeof Sock
+      throw new Error 'Unknow socket type "' + type + '"'
+    return new Sock(@, options)
 
   # client methods
   connect: (url, options) ->
@@ -161,13 +164,14 @@ class Context extends EventEmitter
     connection.send data
 
   close: ->
+    for k, sock in @sockets
+      sock.close()
     
-  
-  
+    if @server
+      server.close()
 
+    if @client
+      @client.close()
 
 
 module.exports = Context
-
-
-
