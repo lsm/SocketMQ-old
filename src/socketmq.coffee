@@ -5,8 +5,10 @@ eio = require 'engine.io'
 
 exports.version = '0.0.0'
 exports.Context = Context
-for k, v of socket
-  exports[k] = v
+exports.Socket = socket.Socket
+
+for k, v of socket.types
+  exports[k.toUpperCase()] = v
 
 
 exports.listen = (port, host, options, callback) ->
