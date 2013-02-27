@@ -23,7 +23,7 @@ class ReqSocket extends Socket
     @flushRoundRobin()
 
 
-
+module.exports = ReqSocket
   
 
 
