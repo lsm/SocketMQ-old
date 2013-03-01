@@ -4,77 +4,66 @@ http = require 'http'
 
 
 describe 'SocketMQ.socket REQ/REP', () ->
-  server = serverContext = clientContext = null
+
   msgText = 'hello'
 
-  beforeEach () ->
-    server = http.createServer () ->
-    serverContext = SocketMQ.listen(server)
-    server.listen 8888, '127.0.0.1'
-    clientContext = SocketMQ.connect('http://127.0.0.1:8888')
+  it 'should bind on reply socket and get echo message from it', (done) ->
+    serverContext = SocketMQ.listen 8889, '127.0.0.1'
+    # create the reply server socket
+    repSocket = serverContext.socket 'rep'
 
-  it 'should send request and get reply', (done) ->
-    server.on 'listening', () ->
-      # create the reply server socket
-      repSocket = serverContext.socket SocketMQ.REP
-      
+    # handle message
+    repSocket.on 'message', (data, reply) ->
+      expect(data).to.be.eql(msgText)
+      reply data
+
+    # bind reply socket to specified endpoint
+    repSocket.bind 'smq://echo', (err) ->
+      if err then throw err
+      clientContext = SocketMQ.connect('http://127.0.0.1:8889')
+
+      # create the request socket and connect
+      reqSocket = clientContext.socket 'req'
+      reqSocket.connect 'smq://echo'
+
       # handle message
-      repSocket.on 'message', (data) ->
-        expect(data).to.be.instanceof(Buffer)
-        expect(data.toString()).to.be.eql(msgText)
-        repSocket.send data
-      
-      # bind reply socket to specified endpoint
-      repSocket.bind 'smq://echo', (err) ->
-        if err then throw err
-        
-        # create the request socket and connect
-        reqSocket = SocketMQ.connect('http://127.0.0.1:8888').socket(SocketMQ.REQ)
-        reqSocket.connect 'smq://echo'
-        
-        # handle message
-        reqSocket.on 'message', (data) ->
-          expect(data).to.be.instanceof(Buffer)
-          expect(data.toString()).to.be.eql(msgText)
-          reqSocket.close()
-          repSocket.close()
-          server.close()
-          done()
+      reqSocket.on 'message', (data) ->
+        expect(data).to.be.eql(msgText)
+        clientContext.close()
+        serverContext.close()
+        done()
 
-        # send out the initial request message
-        reqSocket.send msgText
-        
-  it 'should bind request socket and get echo message from reply socket', (done) ->
-    server.on 'listening', () ->
+      # send out the initial request message
+      reqSocket.send msgText
+
+  it 'should bind on request socket and get echo message from reply socket', (done) ->
+    serverContext = SocketMQ.listen 8899, '127.0.0.1'
+    # create the request spcket
+    reqSocket = serverContext.socket 'req'
+
+    # bind request socket to specified endpoint
+    reqSocket.bind 'smq://echo', (err) ->
+      if err then throw err
+
+      clientContext = SocketMQ.connect('http://127.0.0.1:8899')
       # create the reply client socket
-      repSocket = clientContext.socket SocketMQ.REP
+      repSocket = clientContext.socket 'rep'
       # connect the reply socket
       repSocket.connect 'smq://echo'
-      
+
       # handle message
-      repSocket.on 'message', (data) ->
-        expect(data).to.be.instanceof(Buffer)
-        expect(data.toString()).to.be.eql(msgText)
-        repSocket.send data
+      repSocket.on 'message', (data, reply) ->
+        expect(data).to.be.eql(msgText)
+        reply data
 
-      # create the request spcket
-      reqSocket = serverContext.socket SocketMQ.REQ
-      
-      # bind request socket to specified endpoint
-      reqSocket.bind 'smq://echo', (err) ->
-        if err then throw err
-        
-        # handle message
-        repSocket.on 'message', (data) ->
-          expect(data).to.be.instanceof(Buffer)
-          expect(data.toString()).to.be.eql(msgText)
-          reqSocket.close()
-          repSocket.close()
-          server.close()
-          done()
+      reqSocket.on 'message', (data) ->
+        expect(data).to.be.eql(msgText)
+        clientContext.close()
+        serverContext.close()
+        done()
 
-        # send out the initial request message
-        reqSocket.send msgText    
+      # send out the initial request message
+      reqSocket.send msgText
 
   it 'should queue up the requests if no reply send back', (done) ->
     replyCount = 0
@@ -82,59 +71,60 @@ describe 'SocketMQ.socket REQ/REP', () ->
     requestCount = 0
     requestMsgCount = 0
 
+    serverContext = SocketMQ.listen 8999, '127.0.0.1'
     # create the reply server socket
-    repSocket = serverContext.socket SocketMQ.REP
-    
+    repSocket = serverContext.socket 'rep'
+
+    replyFn = null
     # handle message
-    repSocket.on 'message', (data) ->
-      expect(data).to.be.instanceof(Buffer)
-      expect(data.toString()).to.be.eql(msgText)
+    repSocket.on 'message', (data, reply) ->
+      expect(data).to.be.eql(msgText)
       # we don't reply to the request
-      replyMsgCount++   
-      
+      replyMsgCount++
+
+      _reply = () ->
+        replyCount++
+        reply data
+
+      replyFn = _reply
+
     # bind reply socket to specified endpoint
     repSocket.bind 'smq://echo', (err) ->
       if err then throw err
-      
+
       # create the request socket and connect
-      reqSocket = SocketMQ.connect('http://127.0.0.1:8888').socket(SocketMQ.REQ)
+      reqSocket = SocketMQ.connect('http://127.0.0.1:8999').socket 'req'
       reqSocket.connect 'smq://echo'
-      
+
       # handle message
       reqSocket.on 'message', (data) ->
-        expect(data).to.be.instanceof(Buffer)
-        expect(data.toString()).to.be.eql(msgText)
+        expect(data).to.be.eql(msgText)
         requestMsgCount++
-      
+
       send = () ->
         reqSocket.send msgText
         requestCount++
 
-      # send out 10 messages  
+      # send out 10 messages
       send msg for msg in [10..1]
 
       setTimeout () ->
         expect(replyCount).to.eql(0)
-        expect(replyMsgCount).to.eql(1)        
+        expect(replyMsgCount).to.eql(1)
         expect(requestCount).to.eql(10)
         expect(requestMsgCount).to.eql(0)
+
         # now let's send back the reply
-        reply = () ->
-          reqSocket.send msgText
-          replyCount++
-        reply msg for msg in [10..1]
+        replyFn()
 
         setTimeout () ->
-          expect(replyCount).to.eql(10)
-          expect(replyMsgCount).to.eql(10)        
+          expect(replyCount).to.eql(1)
+          expect(replyMsgCount).to.eql(2)
           expect(requestCount).to.eql(10)
-          expect(requestMsgCount).to.eql(10)
+          expect(requestMsgCount).to.eql(1)
           reqSocket.close()
-          repSocket.close()
-          server.close()
+          serverContext.close()
           done()
-        , 2000
+        , 500
 
-      , 2000
-
-    
+      , 500

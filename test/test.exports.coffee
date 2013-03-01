@@ -2,7 +2,7 @@
 SocketMQ = require '../'
 
 
-describe 'SocketMQ', () ->
+describe 'SocketMQ exports', () ->
   it 'should expose version number', () ->
     expect(SocketMQ.version).to.match(/^\d+\.\d+\.\d+$/)
 

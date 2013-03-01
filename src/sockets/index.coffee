@@ -4,7 +4,8 @@ for k, v of socket
   exports[k] = v
 
 sockets = 
-  req: require('./req')
+  req: require './req'
+  rep: require './rep'
 
 exports.sockets = sockets
 

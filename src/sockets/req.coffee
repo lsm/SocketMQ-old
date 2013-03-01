@@ -4,16 +4,20 @@
 class ReqSocket extends Socket
 
   constructor: (context, options) ->
-    super context, types.req, options
+    super context, 'req', options
     @flushing = false
 
   send: (data) ->
+    # toSend = new Buffer(Buffer.byteLength(data) + 1)
+    # toSend[0] = '\0' # the null delimiter
+    # toSend.concat(new Buffer(data))
     @flushRoundRobin data  
 
   handleMessage: (conn, data) ->
     if not @accept conn.type
       drop data, 'socket type #{conn.type} not accepted'
 
+    # data = data.slice 1
     @connections.push conn
     @emit 'message', data
     @flushRoundRobin()
@@ -22,11 +26,4 @@ class ReqSocket extends Socket
     super conn
     @flushRoundRobin()
 
-
 module.exports = ReqSocket
-  
-
-
-  
-  
-  
