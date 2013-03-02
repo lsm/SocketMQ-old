@@ -13,7 +13,7 @@ urlParse = require('url').parse
 
 
 class Context extends EventEmitter
-  
+
   constructor: (@options) ->
     @sockets = {}
     @connections = {}
@@ -36,9 +36,9 @@ class Context extends EventEmitter
     @client.on 'handshake', (data) =>
       debug 'client handling handshake data %j', data
 
-    
+
     return @
-    
+
   handshake: (socket) ->
     ###
       when received handshake data from server
@@ -52,7 +52,7 @@ class Context extends EventEmitter
       @handleConnection @client, { id: client.id, endpoint: socket.endpoint, type: socket.type }
     else
       @client.on 'open', (data) =>
-        data = 
+        data =
           id: @client.id
           endpoint: socket.endpoint
           type: socket.type
@@ -75,9 +75,9 @@ class Context extends EventEmitter
 
   # server methods
   listen: (port, host, options, fn) ->
-    opts = 
+    opts =
       path: '/socketmq'
-    if not fn 
+    if not fn
       if 'function' is typeof options
         fn = options
         options = null
@@ -99,19 +99,19 @@ class Context extends EventEmitter
     @server.httpServer.on 'listening', (args...) =>
       fn && fn args...
       for endpoint, socket of @sockets
-        for callback in socket.bindCallbacks          
+        for callback in socket.bindCallbacks
           callback args...
 
     @server.on 'connection', (conn) =>
       debug 'server handling new connection ', conn.id
       onPacket = (packet) =>
-        if 'noop' is packet.type          
+        if 'noop' is packet.type
           data = JSON.parse packet.data
           if data.smq
             debug 'server got handshake data from client: %s', packet.data
             conn.smq = data.smq
             conn.removeListener 'packet', onPacket
-            @handleConnection conn, data            
+            @handleConnection conn, data
 
       conn.on 'packet', onPacket
     return @
@@ -121,7 +121,7 @@ class Context extends EventEmitter
       throw new Error 'Endpoint ' + endpoint + ' already in use'
     @sockets[endpoint] = socket
     return @
-  
+
   getSocket: (endpoint) ->
     return endpoint && @sockets[endpoint]
 
@@ -177,15 +177,18 @@ class Context extends EventEmitter
     else
       debug 'Not a SocketMQ connection, closing...'
       conn.close()
-      
+
   send: (socket, conn, data) ->
-    connection = @connections[conn.endpoint][conn.id]
-    connection.send data
+    if @connections[conn.endpoint] and @connections[conn.endpoint][conn.id]
+      connection = @connections[conn.endpoint][conn.id]
+      connection.send data
+    else
+      debug 'Writing data to an inexistent connection %s at endpoint %s', conn.id, conn.endpoint
 
   close: ->
     for k, sock of @sockets
       sock.close()
-    
+
     if @server
       @server.close()
 
