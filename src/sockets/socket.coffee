@@ -92,15 +92,16 @@ class Socket extends EventEmitter
   flushRoundRobin: (data) ->
     if @connections.length > 0 and !@flushing
       @flushing = true
-      @outBuffer.push data
+      if 'undefined' isnt typeof data then @outBuffer.push data
 
       while @connections.length > 0 and @outBuffer.length > 0
         @context.send @, @connections.shift(), @outBuffer.shift()
 
       @flushing = false
-    else if @outBuffer.length >= @hwm
-      @drop data, 'high water mark reached (#{@hwm})'
-    else
-      @outBuffer.push data
+    else if 'undefined' isnt typeof data
+      if @outBuffer.length >= @hwm
+        @drop data, 'high water mark reached (#{@hwm})'
+      else
+        @outBuffer.push data
 
 exports.Socket = Socket
