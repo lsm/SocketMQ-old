@@ -3,7 +3,7 @@ SocketMQ = require '../'
 http = require 'http'
 
 
-describe 'SocketMQ.socket REQ/REP', () ->
+describe 'SocketMQ REQ/REP sockets', () ->
 
   msgText = 'hello'
 
@@ -13,9 +13,9 @@ describe 'SocketMQ.socket REQ/REP', () ->
     repSocket = serverContext.socket 'rep'
 
     # handle message
-    repSocket.on 'message', (data, reply) ->
+    repSocket.on 'message', (data) ->
       expect(data).to.be.eql(msgText)
-      reply data
+      repSocket.send data
 
     # bind reply socket to specified endpoint
     repSocket.bind 'smq://echo', (err) ->
@@ -56,10 +56,10 @@ describe 'SocketMQ.socket REQ/REP', () ->
       repSocket.connect 'smq://echo'
 
       # handle message
-      repSocket.on 'message', (data, reply) ->
+      repSocket.on 'message', (data) ->
         expect(data).to.be.eql(msgText)
         repCount++
-        reply data
+        repSocket.send data
 
       reqSocket.on 'message', (data) ->
         expect(data).to.be.eql(msgText)
@@ -87,14 +87,14 @@ describe 'SocketMQ.socket REQ/REP', () ->
 
     replyFn = null
     # handle message
-    repSocket.on 'message', (data, reply) ->
+    repSocket.on 'message', (data) ->
       expect(data).to.be.eql(msgText)
       # we don't reply to the request
       replyMsgCount++
 
       _reply = () ->
         replyCount++
-        reply data
+        repSocket.send data
 
       replyFn = _reply
 
