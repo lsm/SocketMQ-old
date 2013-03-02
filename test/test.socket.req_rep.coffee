@@ -36,10 +36,14 @@ describe 'SocketMQ.socket REQ/REP', () ->
       # send out the initial request message
       reqSocket.send msgText
 
-  it 'should bind on request socket and get echo message from reply socket', (done) ->
+  it 'should bind on request socket send and get multiple messages', (done) ->
     serverContext = SocketMQ.listen 8899, '127.0.0.1'
     # create the request spcket
     reqSocket = serverContext.socket 'req'
+
+    # counters
+    reqCount = 0
+    repCount = 0
 
     # bind request socket to specified endpoint
     reqSocket.bind 'smq://echo', (err) ->
@@ -54,16 +58,22 @@ describe 'SocketMQ.socket REQ/REP', () ->
       # handle message
       repSocket.on 'message', (data, reply) ->
         expect(data).to.be.eql(msgText)
+        repCount++
         reply data
 
       reqSocket.on 'message', (data) ->
         expect(data).to.be.eql(msgText)
-        clientContext.close()
-        serverContext.close()
-        done()
+        if reqCount++ is 10
+          expect(repCount).to.be.eql(10)
+          clientContext.close()
+          serverContext.close()
+          done()
+        else
+          reqSocket.send data
 
       # send out the initial request message
       reqSocket.send msgText
+      reqCount++
 
   it 'should queue up the requests if no reply send back', (done) ->
     replyCount = 0
