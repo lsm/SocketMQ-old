@@ -68,7 +68,7 @@ class Socket extends EventEmitter
         return type is types.pull
 
   drop: (msg, reason) ->
-    debug 'Message "' + msg + '" dropped due to ' + reason
+    debug 'Message "' + msg + '" dropped due to ' + (reason ? 'unknow reason')
     @emit 'drop', msg, reason
 
   handleConnect: (conn) ->
