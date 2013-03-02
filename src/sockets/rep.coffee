@@ -8,8 +8,6 @@ class RepSocket extends Socket
     super context, 'rep', options
 
   handleMessage: (conn, data) ->
-    if not @accept conn.type
-      drop data, 'socket type #{conn.type} not accepted'
 
     replied = false
     reply = (data) =>

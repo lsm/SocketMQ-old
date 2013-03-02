@@ -14,9 +14,6 @@ class ReqSocket extends Socket
     @flushRoundRobin data  
 
   handleMessage: (conn, data) ->
-    if not @accept conn.type
-      drop data, 'socket type #{conn.type} not accepted'
-
     # data = data.slice 1
     @connections.push conn
     @emit 'message', data
