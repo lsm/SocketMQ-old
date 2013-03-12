@@ -72,15 +72,15 @@ class Socket extends EventEmitter
     @emit 'drop', msg, reason
 
   handleConnect: (conn) ->
-    @emit 'connect', conn
     if conn not in @connections
       @connections.push conn
+    @emit 'connect', conn
 
   handleDisconnect: (conn) ->
     idx = @connections.indexOf conn
     if idx > -1
-      @emit 'disconnect', conn
       @connections.splice idx, 1
+      @emit 'disconnect', conn
 
   close: ->
     if not @closed
