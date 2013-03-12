@@ -166,8 +166,9 @@ class Context extends EventEmitter
             else
               debug 'Closing an inexistent engine.io socket'
 
-        conn.on 'message', (data) ->
-          socket.handleMessage connMeta, data
+        if 'function' is typeof socket.handleMessage
+          conn.on 'message', (data) ->
+            socket.handleMessage connMeta, data
 
         socket.handleConnect connMeta
       else
