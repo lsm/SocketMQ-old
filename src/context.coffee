@@ -34,8 +34,7 @@ class Context extends EventEmitter
 
     # Engine.io "open" packet sent from "server"
     @client.on 'handshake', (data) =>
-      debug 'client handling handshake data %j', data
-
+      debug '[HS0] client handling handshake data %j', data
 
     return @
 
@@ -63,14 +62,14 @@ class Context extends EventEmitter
           if 'noop' is packet.type
             data = JSON.parse packet.data
             if data.smq
-              debug 'client got noop packet data from server: %s', packet.data
+              debug '[HS4] client finished handshake and got noop packet data from server: %s', packet.data
               @client.smq = data.smq
               @client.removeListener 'packet', onPacket
               @handleConnection @client, data
 
         @client.on 'packet', onPacket
 
-        debug 'client sending noop packet to server with data %s', data
+        debug '[HS1] client sending noop packet to server with data %s', data
         @client.sendPacket 'noop', data
 
   # server methods
@@ -108,7 +107,7 @@ class Context extends EventEmitter
         if 'noop' is packet.type
           data = JSON.parse packet.data
           if data.smq
-            debug 'server got handshake data from client: %s', packet.data
+            debug '[HS2] server got handshake data from client: %s', packet.data
             conn.smq = data.smq
             conn.removeListener 'packet', onPacket
             @handleConnection conn, data
@@ -147,7 +146,7 @@ class Context extends EventEmitter
           # other properties should be same
           data.type = socket.type
           data = JSON.stringify data
-          debug 'server send noop packet to client %s', data
+          debug '[HS3] server finished handshake and send noop packet to client %s', data
           conn.sendPacket 'noop', data
 
         connections = @connections
