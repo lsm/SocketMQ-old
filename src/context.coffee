@@ -41,8 +41,8 @@ class Context extends EventEmitter
   handshake: (socket) ->
     ###
       when received handshake data from server
-      add socket info to received data and send an "open" packet to server
-      the server will reply an "open" packet with server endpoint info
+      add socket info to received data and send an "noop" packet to server
+      the server will reply an "noop" packet with server endpoint info
       or close the connection if the socket type miss match (e.g. connect req to req)
     ###
     if @client.smq
@@ -136,7 +136,7 @@ class Context extends EventEmitter
         conn.close()
       else if socket.accept type
         if conn.server
-          # connection on server side, need to reply an open packet to client
+          # connection on server side, need to reply an noop packet to client
           data = {}
 
           for k, v of meta
