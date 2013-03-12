@@ -48,7 +48,7 @@ class Context extends EventEmitter
     if @client.smq
       # the underlying connection already handshaked
       # try to handle the connection with given socket properties
-      @handleConnection @client, { id: client.id, endpoint: socket.endpoint, type: socket.type }
+      @handleConnection @client, { id: @client.id, endpoint: socket.endpoint, type: socket.type }
     else
       @client.on 'open', (data) =>
         data =
