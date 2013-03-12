@@ -1,6 +1,6 @@
 {
   "name": "socketmq",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Library for building application in ZeroMQ-like messaging semantics end to end. Build upon node.js and Engine.IO",
   "keywords": ["zeromq", "zmq", "message", "queue", "engine.io"],
   "author": "Senmiao Liu <zir.echo@gmail.com>",
