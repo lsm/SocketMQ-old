@@ -3,7 +3,13 @@
   "version": "0.0.1",
   "description": "Library for building application in ZeroMQ-like messaging semantics end to end. Build upon node.js and Engine.IO",
   "keywords": ["zeromq", "zmq", "message", "queue", "engine.io"],
-  "author": "Senmiao Liu <zir.echo@gmail.com>",
+  "homepage": "http://github.com/zir/socketmq",
+  "author": "Senmiao Liu <senmiao.liu@gmail.com>",
+  "maintainers": "Senmiao Liu <senmiao.liu@gmail.com>",
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/zir/socketmq.git"
+  },
   "dependencies": {
     "zmq": "2.2.0",
     "engine.io": "0.4.3",
@@ -15,5 +21,11 @@
     "chai": "*",
     "coffee-script": "1.4.x"
   },
-  "main": "index"
+  "main": "index",
+  "scripts": {
+    "test": "make test"
+  },
+  "engines": {
+    "node": ">= 0.6.0"
+  }
 }
