@@ -8,6 +8,8 @@ sockets =
   rep: require './rep'
   pub: require './pub'
   sub: require './sub'
+  push: require './push'
+  pull: require './pull'
 
 
 exports.sockets = sockets
